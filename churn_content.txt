@@ -1,0 +1,1193 @@
+<main class="content" id="quarto-document-content">
+ <header class="quarto-title-block default" id="title-block-header">
+  <div class="quarto-title">
+   <h1 class="title">
+    Customer Churn Modeling with Reproducible Machine Learning
+   </h1>
+  </div>
+  <div>
+   <div class="description">
+    A prose-first Quarto report using Python, pandas, scikit-learn, cross-validation, and ROC-AUC.
+   </div>
+  </div>
+  <div class="quarto-title-meta">
+   <div>
+    <div class="quarto-title-meta-heading">
+     Author
+    </div>
+    <div class="quarto-title-meta-contents">
+     <p>
+      Abdullah Korra
+     </p>
+    </div>
+   </div>
+   <div>
+    <div class="quarto-title-meta-heading">
+     Published
+    </div>
+    <div class="quarto-title-meta-contents">
+     <p class="date">
+      April 23, 2026
+     </p>
+    </div>
+   </div>
+  </div>
+ </header>
+ <section class="level2" id="introduction">
+  <h2 class="anchored" data-anchor-id="introduction">
+   Introduction
+  </h2>
+  <p>
+   This report asks a practical question:
+   <strong>
+    which customers are at the highest risk of churn, and how well can that risk be predicted from customer account information?
+   </strong>
+   This is a good portfolio problem because it naturally supports exploratory data analysis, preprocessing, classification, cross-validation, and threshold-aware model evaluation.
+  </p>
+  <p>
+   The writeup is intentionally prose-forward. The goal is not to show every possible model. The goal is to show a clean analytical workflow that balances technical detail with readable decision support.
+  </p>
+ </section>
+ <section class="level2" id="data-and-setup">
+  <h2 class="anchored" data-anchor-id="data-and-setup">
+   Data and setup
+  </h2>
+  <p>
+   The analysis uses the common Telco Customer Churn dataset. The code below first looks for a local copy in
+   <code>
+    data/raw/
+   </code>
+   . If the file is not present, it falls back to a public raw CSV URL so the document can still render.
+  </p>
+  <div class="cell" data-execution_count="1" id="cell-imports-and-load">
+   <details class="code-fold">
+    <summary>
+     Show code
+    </summary>
+    <div class="code-copy-outer-scaffold">
+     <div class="sourceCode cell-code" id="cb1">
+      <pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a aria-hidden="true" href="#cb1-1" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb1-2"><a aria-hidden="true" href="#cb1-2" tabindex="-1"></a></span>
+<span id="cb1-3"><a aria-hidden="true" href="#cb1-3" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-4"><a aria-hidden="true" href="#cb1-4" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-5"><a aria-hidden="true" href="#cb1-5" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-6"><a aria-hidden="true" href="#cb1-6" tabindex="-1"></a></span>
+<span id="cb1-7"><a aria-hidden="true" href="#cb1-7" tabindex="-1"></a><span class="im">from</span> sklearn.compose <span class="im">import</span> ColumnTransformer</span>
+<span id="cb1-8"><a aria-hidden="true" href="#cb1-8" tabindex="-1"></a><span class="im">from</span> sklearn.pipeline <span class="im">import</span> Pipeline</span>
+<span id="cb1-9"><a aria-hidden="true" href="#cb1-9" tabindex="-1"></a><span class="im">from</span> sklearn.impute <span class="im">import</span> SimpleImputer</span>
+<span id="cb1-10"><a aria-hidden="true" href="#cb1-10" tabindex="-1"></a><span class="im">from</span> sklearn.preprocessing <span class="im">import</span> OneHotEncoder, StandardScaler</span>
+<span id="cb1-11"><a aria-hidden="true" href="#cb1-11" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split, StratifiedKFold, cross_validate</span>
+<span id="cb1-12"><a aria-hidden="true" href="#cb1-12" tabindex="-1"></a><span class="im">from</span> sklearn.linear_model <span class="im">import</span> LogisticRegression</span>
+<span id="cb1-13"><a aria-hidden="true" href="#cb1-13" tabindex="-1"></a><span class="im">from</span> sklearn.ensemble <span class="im">import</span> RandomForestClassifier</span>
+<span id="cb1-14"><a aria-hidden="true" href="#cb1-14" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> (</span>
+<span id="cb1-15"><a aria-hidden="true" href="#cb1-15" tabindex="-1"></a>    roc_auc_score,</span>
+<span id="cb1-16"><a aria-hidden="true" href="#cb1-16" tabindex="-1"></a>    confusion_matrix,</span>
+<span id="cb1-17"><a aria-hidden="true" href="#cb1-17" tabindex="-1"></a>    ConfusionMatrixDisplay,</span>
+<span id="cb1-18"><a aria-hidden="true" href="#cb1-18" tabindex="-1"></a>    RocCurveDisplay,</span>
+<span id="cb1-19"><a aria-hidden="true" href="#cb1-19" tabindex="-1"></a>    precision_score,</span>
+<span id="cb1-20"><a aria-hidden="true" href="#cb1-20" tabindex="-1"></a>    recall_score,</span>
+<span id="cb1-21"><a aria-hidden="true" href="#cb1-21" tabindex="-1"></a>    accuracy_score,</span>
+<span id="cb1-22"><a aria-hidden="true" href="#cb1-22" tabindex="-1"></a>)</span>
+<span id="cb1-23"><a aria-hidden="true" href="#cb1-23" tabindex="-1"></a></span>
+<span id="cb1-24"><a aria-hidden="true" href="#cb1-24" tabindex="-1"></a>DATA_DIR <span class="op">=</span> Path(<span class="st">"../data/raw"</span>)</span>
+<span id="cb1-25"><a aria-hidden="true" href="#cb1-25" tabindex="-1"></a>LOCAL_PATH <span class="op">=</span> DATA_DIR <span class="op">/</span> <span class="st">"WA_Fn-UseC_-Telco-Customer-Churn.csv"</span></span>
+<span id="cb1-26"><a aria-hidden="true" href="#cb1-26" tabindex="-1"></a>REMOTE_URL <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/treselle-systems/customer_churn_analysis/master/WA_Fn-UseC_-Telco-Customer-Churn.csv"</span></span>
+<span id="cb1-27"><a aria-hidden="true" href="#cb1-27" tabindex="-1"></a></span>
+<span id="cb1-28"><a aria-hidden="true" href="#cb1-28" tabindex="-1"></a><span class="cf">if</span> LOCAL_PATH.exists():</span>
+<span id="cb1-29"><a aria-hidden="true" href="#cb1-29" tabindex="-1"></a>    churn <span class="op">=</span> pd.read_csv(LOCAL_PATH)</span>
+<span id="cb1-30"><a aria-hidden="true" href="#cb1-30" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb1-31"><a aria-hidden="true" href="#cb1-31" tabindex="-1"></a>    churn <span class="op">=</span> pd.read_csv(REMOTE_URL)</span>
+<span id="cb1-32"><a aria-hidden="true" href="#cb1-32" tabindex="-1"></a></span>
+<span id="cb1-33"><a aria-hidden="true" href="#cb1-33" tabindex="-1"></a>churn.head()</span></code></pre>
+     </div>
+     <button class="code-copy-button" title="Copy to Clipboard">
+      <i class="bi">
+      </i>
+     </button>
+    </div>
+   </details>
+   <div class="cell-output cell-output-display" data-execution_count="1" id="imports-and-load">
+    <div>
+     <table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+      <thead>
+       <tr class="header">
+        <th data-quarto-table-cell-role="th">
+        </th>
+        <th data-quarto-table-cell-role="th">
+         customerID
+        </th>
+        <th data-quarto-table-cell-role="th">
+         gender
+        </th>
+        <th data-quarto-table-cell-role="th">
+         SeniorCitizen
+        </th>
+        <th data-quarto-table-cell-role="th">
+         Partner
+        </th>
+        <th data-quarto-table-cell-role="th">
+         Dependents
+        </th>
+        <th data-quarto-table-cell-role="th">
+         tenure
+        </th>
+        <th data-quarto-table-cell-role="th">
+         PhoneService
+        </th>
+        <th data-quarto-table-cell-role="th">
+         MultipleLines
+        </th>
+        <th data-quarto-table-cell-role="th">
+         InternetService
+        </th>
+        <th data-quarto-table-cell-role="th">
+         OnlineSecurity
+        </th>
+        <th data-quarto-table-cell-role="th">
+         ...
+        </th>
+        <th data-quarto-table-cell-role="th">
+         DeviceProtection
+        </th>
+        <th data-quarto-table-cell-role="th">
+         TechSupport
+        </th>
+        <th data-quarto-table-cell-role="th">
+         StreamingTV
+        </th>
+        <th data-quarto-table-cell-role="th">
+         StreamingMovies
+        </th>
+        <th data-quarto-table-cell-role="th">
+         Contract
+        </th>
+        <th data-quarto-table-cell-role="th">
+         PaperlessBilling
+        </th>
+        <th data-quarto-table-cell-role="th">
+         PaymentMethod
+        </th>
+        <th data-quarto-table-cell-role="th">
+         MonthlyCharges
+        </th>
+        <th data-quarto-table-cell-role="th">
+         TotalCharges
+        </th>
+        <th data-quarto-table-cell-role="th">
+         Churn
+        </th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr class="odd">
+        <th data-quarto-table-cell-role="th">
+         0
+        </th>
+        <td>
+         7590-VHVEG
+        </td>
+        <td>
+         Female
+        </td>
+        <td>
+         0
+        </td>
+        <td>
+         Yes
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         1
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         No phone service
+        </td>
+        <td>
+         DSL
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         ...
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         Month-to-month
+        </td>
+        <td>
+         Yes
+        </td>
+        <td>
+         Electronic check
+        </td>
+        <td>
+         29.85
+        </td>
+        <td>
+         29.85
+        </td>
+        <td>
+         No
+        </td>
+       </tr>
+       <tr class="even">
+        <th data-quarto-table-cell-role="th">
+         1
+        </th>
+        <td>
+         5575-GNVDE
+        </td>
+        <td>
+         Male
+        </td>
+        <td>
+         0
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         34
+        </td>
+        <td>
+         Yes
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         DSL
+        </td>
+        <td>
+         Yes
+        </td>
+        <td>
+         ...
+        </td>
+        <td>
+         Yes
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         One year
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         Mailed check
+        </td>
+        <td>
+         56.95
+        </td>
+        <td>
+         1889.5
+        </td>
+        <td>
+         No
+        </td>
+       </tr>
+       <tr class="odd">
+        <th data-quarto-table-cell-role="th">
+         2
+        </th>
+        <td>
+         3668-QPYBK
+        </td>
+        <td>
+         Male
+        </td>
+        <td>
+         0
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         2
+        </td>
+        <td>
+         Yes
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         DSL
+        </td>
+        <td>
+         Yes
+        </td>
+        <td>
+         ...
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         Month-to-month
+        </td>
+        <td>
+         Yes
+        </td>
+        <td>
+         Mailed check
+        </td>
+        <td>
+         53.85
+        </td>
+        <td>
+         108.15
+        </td>
+        <td>
+         Yes
+        </td>
+       </tr>
+       <tr class="even">
+        <th data-quarto-table-cell-role="th">
+         3
+        </th>
+        <td>
+         7795-CFOCW
+        </td>
+        <td>
+         Male
+        </td>
+        <td>
+         0
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         45
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         No phone service
+        </td>
+        <td>
+         DSL
+        </td>
+        <td>
+         Yes
+        </td>
+        <td>
+         ...
+        </td>
+        <td>
+         Yes
+        </td>
+        <td>
+         Yes
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         One year
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         Bank transfer (automatic)
+        </td>
+        <td>
+         42.30
+        </td>
+        <td>
+         1840.75
+        </td>
+        <td>
+         No
+        </td>
+       </tr>
+       <tr class="odd">
+        <th data-quarto-table-cell-role="th">
+         4
+        </th>
+        <td>
+         9237-HQITU
+        </td>
+        <td>
+         Female
+        </td>
+        <td>
+         0
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         2
+        </td>
+        <td>
+         Yes
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         Fiber optic
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         ...
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         No
+        </td>
+        <td>
+         Month-to-month
+        </td>
+        <td>
+         Yes
+        </td>
+        <td>
+         Electronic check
+        </td>
+        <td>
+         70.70
+        </td>
+        <td>
+         151.65
+        </td>
+        <td>
+         Yes
+        </td>
+       </tr>
+      </tbody>
+     </table>
+     <p>
+      5 rows × 21 columns
+     </p>
+    </div>
+   </div>
+  </div>
+  <div class="cell" data-execution_count="2" id="cell-clean-data">
+   <details class="code-fold">
+    <summary>
+     Show code
+    </summary>
+    <div class="code-copy-outer-scaffold">
+     <div class="sourceCode cell-code" id="cb2">
+      <pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a aria-hidden="true" href="#cb2-1" tabindex="-1"></a>churn[<span class="st">"TotalCharges"</span>] <span class="op">=</span> pd.to_numeric(churn[<span class="st">"TotalCharges"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
+<span id="cb2-2"><a aria-hidden="true" href="#cb2-2" tabindex="-1"></a>churn <span class="op">=</span> churn.drop(columns<span class="op">=</span>[<span class="st">"customerID"</span>])</span>
+<span id="cb2-3"><a aria-hidden="true" href="#cb2-3" tabindex="-1"></a>churn <span class="op">=</span> churn.dropna().copy()</span>
+<span id="cb2-4"><a aria-hidden="true" href="#cb2-4" tabindex="-1"></a></span>
+<span id="cb2-5"><a aria-hidden="true" href="#cb2-5" tabindex="-1"></a>churn[<span class="st">"Churn"</span>] <span class="op">=</span> (churn[<span class="st">"Churn"</span>] <span class="op">==</span> <span class="st">"Yes"</span>).astype(<span class="bu">int</span>)</span>
+<span id="cb2-6"><a aria-hidden="true" href="#cb2-6" tabindex="-1"></a></span>
+<span id="cb2-7"><a aria-hidden="true" href="#cb2-7" tabindex="-1"></a>churn.shape</span></code></pre>
+     </div>
+     <button class="code-copy-button" title="Copy to Clipboard">
+      <i class="bi">
+      </i>
+     </button>
+    </div>
+   </details>
+   <div class="cell-output cell-output-display" data-execution_count="2" id="clean-data">
+    <pre><code>(7032, 20)</code></pre>
+   </div>
+  </div>
+  <p>
+   The cleaned data contains customer demographics, service subscriptions, contract details, and billing information. The outcome is whether the customer churned.
+  </p>
+ </section>
+ <section class="level2" id="exploratory-data-analysis">
+  <h2 class="anchored" data-anchor-id="exploratory-data-analysis">
+   Exploratory data analysis
+  </h2>
+  <p>
+   A good report does not flood the page with charts. The purpose here is to identify a few patterns that matter for modeling and interpretation.
+  </p>
+  <div class="cell" data-execution_count="3" id="cell-target-rate">
+   <div class="cell-output cell-output-display">
+    <div>
+     <figure class="figure">
+      <p>
+       <img class="figure-img" height="376" id="target-rate" src="telco-churn-report_files/figure-html/target-rate-output-1.png" width="514"/>
+      </p>
+     </figure>
+    </div>
+   </div>
+  </div>
+  <div class="cell" data-execution_count="4" id="cell-contract-churn">
+   <div class="cell-output cell-output-display">
+    <div>
+     <figure class="figure">
+      <p>
+       <img class="figure-img" height="403" id="contract-churn" src="telco-churn-report_files/figure-html/contract-churn-output-1.png" width="597"/>
+      </p>
+     </figure>
+    </div>
+   </div>
+  </div>
+  <div class="cell" data-execution_count="5" id="cell-charges-vs-tenure">
+   <div class="cell-output cell-output-display">
+    <div>
+     <figure class="figure">
+      <p>
+       <img class="figure-img" height="449" id="charges-vs-tenure" src="telco-churn-report_files/figure-html/charges-vs-tenure-output-1.png" width="593"/>
+      </p>
+     </figure>
+    </div>
+   </div>
+  </div>
+  <p>
+   Three patterns stand out. First, churn is present but not dominant, so the problem is somewhat imbalanced without being extreme. Second, contract type appears strongly related to churn. Third, churn risk is not likely to be captured by a single numeric variable alone, which supports using a preprocessing pipeline that handles mixed data types.
+  </p>
+ </section>
+ <section class="level2" id="feature-engineering-and-preprocessing">
+  <h2 class="anchored" data-anchor-id="feature-engineering-and-preprocessing">
+   Feature engineering and preprocessing
+  </h2>
+  <p>
+   The dataset includes both numeric and categorical variables. A clean way to handle this is a column transformer inside a pipeline.
+  </p>
+  <div class="cell" data-execution_count="6" id="split-data">
+   <details class="code-fold">
+    <summary>
+     Show code
+    </summary>
+    <div class="code-copy-outer-scaffold">
+     <div class="sourceCode cell-code" id="cb4">
+      <pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a aria-hidden="true" href="#cb4-1" tabindex="-1"></a>X <span class="op">=</span> churn.drop(columns<span class="op">=</span><span class="st">"Churn"</span>)</span>
+<span id="cb4-2"><a aria-hidden="true" href="#cb4-2" tabindex="-1"></a>y <span class="op">=</span> churn[<span class="st">"Churn"</span>]</span>
+<span id="cb4-3"><a aria-hidden="true" href="#cb4-3" tabindex="-1"></a></span>
+<span id="cb4-4"><a aria-hidden="true" href="#cb4-4" tabindex="-1"></a>numeric_features <span class="op">=</span> X.select_dtypes(include<span class="op">=</span>[<span class="st">"number"</span>]).columns.tolist()</span>
+<span id="cb4-5"><a aria-hidden="true" href="#cb4-5" tabindex="-1"></a>categorical_features <span class="op">=</span> X.select_dtypes(exclude<span class="op">=</span>[<span class="st">"number"</span>]).columns.tolist()</span>
+<span id="cb4-6"><a aria-hidden="true" href="#cb4-6" tabindex="-1"></a></span>
+<span id="cb4-7"><a aria-hidden="true" href="#cb4-7" tabindex="-1"></a>X_train, X_test, y_train, y_test <span class="op">=</span> train_test_split(</span>
+<span id="cb4-8"><a aria-hidden="true" href="#cb4-8" tabindex="-1"></a>    X,</span>
+<span id="cb4-9"><a aria-hidden="true" href="#cb4-9" tabindex="-1"></a>    y,</span>
+<span id="cb4-10"><a aria-hidden="true" href="#cb4-10" tabindex="-1"></a>    test_size<span class="op">=</span><span class="fl">0.30</span>,</span>
+<span id="cb4-11"><a aria-hidden="true" href="#cb4-11" tabindex="-1"></a>    random_state<span class="op">=</span><span class="dv">4025</span>,</span>
+<span id="cb4-12"><a aria-hidden="true" href="#cb4-12" tabindex="-1"></a>    stratify<span class="op">=</span>y,</span>
+<span id="cb4-13"><a aria-hidden="true" href="#cb4-13" tabindex="-1"></a>)</span>
+<span id="cb4-14"><a aria-hidden="true" href="#cb4-14" tabindex="-1"></a></span>
+<span id="cb4-15"><a aria-hidden="true" href="#cb4-15" tabindex="-1"></a>numeric_preprocess <span class="op">=</span> Pipeline(</span>
+<span id="cb4-16"><a aria-hidden="true" href="#cb4-16" tabindex="-1"></a>    steps<span class="op">=</span>[</span>
+<span id="cb4-17"><a aria-hidden="true" href="#cb4-17" tabindex="-1"></a>        (<span class="st">"imputer"</span>, SimpleImputer(strategy<span class="op">=</span><span class="st">"median"</span>)),</span>
+<span id="cb4-18"><a aria-hidden="true" href="#cb4-18" tabindex="-1"></a>        (<span class="st">"scaler"</span>, StandardScaler()),</span>
+<span id="cb4-19"><a aria-hidden="true" href="#cb4-19" tabindex="-1"></a>    ]</span>
+<span id="cb4-20"><a aria-hidden="true" href="#cb4-20" tabindex="-1"></a>)</span>
+<span id="cb4-21"><a aria-hidden="true" href="#cb4-21" tabindex="-1"></a></span>
+<span id="cb4-22"><a aria-hidden="true" href="#cb4-22" tabindex="-1"></a>categorical_preprocess <span class="op">=</span> Pipeline(</span>
+<span id="cb4-23"><a aria-hidden="true" href="#cb4-23" tabindex="-1"></a>    steps<span class="op">=</span>[</span>
+<span id="cb4-24"><a aria-hidden="true" href="#cb4-24" tabindex="-1"></a>        (<span class="st">"imputer"</span>, SimpleImputer(strategy<span class="op">=</span><span class="st">"most_frequent"</span>)),</span>
+<span id="cb4-25"><a aria-hidden="true" href="#cb4-25" tabindex="-1"></a>        (<span class="st">"onehot"</span>, OneHotEncoder(handle_unknown<span class="op">=</span><span class="st">"ignore"</span>)),</span>
+<span id="cb4-26"><a aria-hidden="true" href="#cb4-26" tabindex="-1"></a>    ]</span>
+<span id="cb4-27"><a aria-hidden="true" href="#cb4-27" tabindex="-1"></a>)</span>
+<span id="cb4-28"><a aria-hidden="true" href="#cb4-28" tabindex="-1"></a></span>
+<span id="cb4-29"><a aria-hidden="true" href="#cb4-29" tabindex="-1"></a>preprocessor <span class="op">=</span> ColumnTransformer(</span>
+<span id="cb4-30"><a aria-hidden="true" href="#cb4-30" tabindex="-1"></a>    transformers<span class="op">=</span>[</span>
+<span id="cb4-31"><a aria-hidden="true" href="#cb4-31" tabindex="-1"></a>        (<span class="st">"num"</span>, numeric_preprocess, numeric_features),</span>
+<span id="cb4-32"><a aria-hidden="true" href="#cb4-32" tabindex="-1"></a>        (<span class="st">"cat"</span>, categorical_preprocess, categorical_features),</span>
+<span id="cb4-33"><a aria-hidden="true" href="#cb4-33" tabindex="-1"></a>    ]</span>
+<span id="cb4-34"><a aria-hidden="true" href="#cb4-34" tabindex="-1"></a>)</span>
+<span id="cb4-35"><a aria-hidden="true" href="#cb4-35" tabindex="-1"></a></span>
+<span id="cb4-36"><a aria-hidden="true" href="#cb4-36" tabindex="-1"></a>cv <span class="op">=</span> StratifiedKFold(n_splits<span class="op">=</span><span class="dv">5</span>, shuffle<span class="op">=</span><span class="va">True</span>, random_state<span class="op">=</span><span class="dv">4025</span>)</span></code></pre>
+     </div>
+     <button class="code-copy-button" title="Copy to Clipboard">
+      <i class="bi">
+      </i>
+     </button>
+    </div>
+   </details>
+  </div>
+ </section>
+ <section class="level2" id="modeling">
+  <h2 class="anchored" data-anchor-id="modeling">
+   Modeling
+  </h2>
+  <p>
+   A good portfolio report should compare a simple, interpretable baseline with at least one stronger nonlinear model.
+  </p>
+  <div class="cell" data-execution_count="7" id="define-models">
+   <details class="code-fold">
+    <summary>
+     Show code
+    </summary>
+    <div class="code-copy-outer-scaffold">
+     <div class="sourceCode cell-code" id="cb5">
+      <pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a aria-hidden="true" href="#cb5-1" tabindex="-1"></a>logistic_model <span class="op">=</span> Pipeline(</span>
+<span id="cb5-2"><a aria-hidden="true" href="#cb5-2" tabindex="-1"></a>    steps<span class="op">=</span>[</span>
+<span id="cb5-3"><a aria-hidden="true" href="#cb5-3" tabindex="-1"></a>        (<span class="st">"preprocess"</span>, preprocessor),</span>
+<span id="cb5-4"><a aria-hidden="true" href="#cb5-4" tabindex="-1"></a>        (<span class="st">"model"</span>, LogisticRegression(max_iter<span class="op">=</span><span class="dv">2000</span>)),</span>
+<span id="cb5-5"><a aria-hidden="true" href="#cb5-5" tabindex="-1"></a>    ]</span>
+<span id="cb5-6"><a aria-hidden="true" href="#cb5-6" tabindex="-1"></a>)</span>
+<span id="cb5-7"><a aria-hidden="true" href="#cb5-7" tabindex="-1"></a></span>
+<span id="cb5-8"><a aria-hidden="true" href="#cb5-8" tabindex="-1"></a>forest_model <span class="op">=</span> Pipeline(</span>
+<span id="cb5-9"><a aria-hidden="true" href="#cb5-9" tabindex="-1"></a>    steps<span class="op">=</span>[</span>
+<span id="cb5-10"><a aria-hidden="true" href="#cb5-10" tabindex="-1"></a>        (<span class="st">"preprocess"</span>, preprocessor),</span>
+<span id="cb5-11"><a aria-hidden="true" href="#cb5-11" tabindex="-1"></a>        (<span class="st">"model"</span>, RandomForestClassifier(</span>
+<span id="cb5-12"><a aria-hidden="true" href="#cb5-12" tabindex="-1"></a>            n_estimators<span class="op">=</span><span class="dv">400</span>,</span>
+<span id="cb5-13"><a aria-hidden="true" href="#cb5-13" tabindex="-1"></a>            min_samples_leaf<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb5-14"><a aria-hidden="true" href="#cb5-14" tabindex="-1"></a>            random_state<span class="op">=</span><span class="dv">4025</span>,</span>
+<span id="cb5-15"><a aria-hidden="true" href="#cb5-15" tabindex="-1"></a>        )),</span>
+<span id="cb5-16"><a aria-hidden="true" href="#cb5-16" tabindex="-1"></a>    ]</span>
+<span id="cb5-17"><a aria-hidden="true" href="#cb5-17" tabindex="-1"></a>)</span></code></pre>
+     </div>
+     <button class="code-copy-button" title="Copy to Clipboard">
+      <i class="bi">
+      </i>
+     </button>
+    </div>
+   </details>
+  </div>
+  <div class="cell" data-execution_count="8" id="cell-cross-validation">
+   <details class="code-fold">
+    <summary>
+     Show code
+    </summary>
+    <div class="code-copy-outer-scaffold">
+     <div class="sourceCode cell-code" id="cb6">
+      <pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a aria-hidden="true" href="#cb6-1" tabindex="-1"></a>scoring <span class="op">=</span> {</span>
+<span id="cb6-2"><a aria-hidden="true" href="#cb6-2" tabindex="-1"></a>    <span class="st">"roc_auc"</span>: <span class="st">"roc_auc"</span>,</span>
+<span id="cb6-3"><a aria-hidden="true" href="#cb6-3" tabindex="-1"></a>    <span class="st">"accuracy"</span>: <span class="st">"accuracy"</span>,</span>
+<span id="cb6-4"><a aria-hidden="true" href="#cb6-4" tabindex="-1"></a>    <span class="st">"precision"</span>: <span class="st">"precision"</span>,</span>
+<span id="cb6-5"><a aria-hidden="true" href="#cb6-5" tabindex="-1"></a>    <span class="st">"recall"</span>: <span class="st">"recall"</span>,</span>
+<span id="cb6-6"><a aria-hidden="true" href="#cb6-6" tabindex="-1"></a>}</span>
+<span id="cb6-7"><a aria-hidden="true" href="#cb6-7" tabindex="-1"></a></span>
+<span id="cb6-8"><a aria-hidden="true" href="#cb6-8" tabindex="-1"></a>cv_results <span class="op">=</span> []</span>
+<span id="cb6-9"><a aria-hidden="true" href="#cb6-9" tabindex="-1"></a></span>
+<span id="cb6-10"><a aria-hidden="true" href="#cb6-10" tabindex="-1"></a><span class="cf">for</span> name, model <span class="kw">in</span> {</span>
+<span id="cb6-11"><a aria-hidden="true" href="#cb6-11" tabindex="-1"></a>    <span class="st">"Logistic Regression"</span>: logistic_model,</span>
+<span id="cb6-12"><a aria-hidden="true" href="#cb6-12" tabindex="-1"></a>    <span class="st">"Random Forest"</span>: forest_model,</span>
+<span id="cb6-13"><a aria-hidden="true" href="#cb6-13" tabindex="-1"></a>}.items():</span>
+<span id="cb6-14"><a aria-hidden="true" href="#cb6-14" tabindex="-1"></a>    scores <span class="op">=</span> cross_validate(</span>
+<span id="cb6-15"><a aria-hidden="true" href="#cb6-15" tabindex="-1"></a>        model,</span>
+<span id="cb6-16"><a aria-hidden="true" href="#cb6-16" tabindex="-1"></a>        X_train,</span>
+<span id="cb6-17"><a aria-hidden="true" href="#cb6-17" tabindex="-1"></a>        y_train,</span>
+<span id="cb6-18"><a aria-hidden="true" href="#cb6-18" tabindex="-1"></a>        cv<span class="op">=</span>cv,</span>
+<span id="cb6-19"><a aria-hidden="true" href="#cb6-19" tabindex="-1"></a>        scoring<span class="op">=</span>scoring,</span>
+<span id="cb6-20"><a aria-hidden="true" href="#cb6-20" tabindex="-1"></a>        n_jobs<span class="op">=-</span><span class="dv">1</span>,</span>
+<span id="cb6-21"><a aria-hidden="true" href="#cb6-21" tabindex="-1"></a>        return_train_score<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb6-22"><a aria-hidden="true" href="#cb6-22" tabindex="-1"></a>    )</span>
+<span id="cb6-23"><a aria-hidden="true" href="#cb6-23" tabindex="-1"></a>    cv_results.append({</span>
+<span id="cb6-24"><a aria-hidden="true" href="#cb6-24" tabindex="-1"></a>        <span class="st">"model"</span>: name,</span>
+<span id="cb6-25"><a aria-hidden="true" href="#cb6-25" tabindex="-1"></a>        <span class="st">"cv_roc_auc_mean"</span>: scores[<span class="st">"test_roc_auc"</span>].mean(),</span>
+<span id="cb6-26"><a aria-hidden="true" href="#cb6-26" tabindex="-1"></a>        <span class="st">"cv_accuracy_mean"</span>: scores[<span class="st">"test_accuracy"</span>].mean(),</span>
+<span id="cb6-27"><a aria-hidden="true" href="#cb6-27" tabindex="-1"></a>        <span class="st">"cv_precision_mean"</span>: scores[<span class="st">"test_precision"</span>].mean(),</span>
+<span id="cb6-28"><a aria-hidden="true" href="#cb6-28" tabindex="-1"></a>        <span class="st">"cv_recall_mean"</span>: scores[<span class="st">"test_recall"</span>].mean(),</span>
+<span id="cb6-29"><a aria-hidden="true" href="#cb6-29" tabindex="-1"></a>    })</span>
+<span id="cb6-30"><a aria-hidden="true" href="#cb6-30" tabindex="-1"></a></span>
+<span id="cb6-31"><a aria-hidden="true" href="#cb6-31" tabindex="-1"></a>cv_df <span class="op">=</span> pd.DataFrame(cv_results).sort_values(<span class="st">"cv_roc_auc_mean"</span>, ascending<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb6-32"><a aria-hidden="true" href="#cb6-32" tabindex="-1"></a>cv_df</span></code></pre>
+     </div>
+     <button class="code-copy-button" title="Copy to Clipboard">
+      <i class="bi">
+      </i>
+     </button>
+    </div>
+   </details>
+   <div class="cell-output cell-output-display" data-execution_count="8" id="cross-validation">
+    <div>
+     <table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+      <thead>
+       <tr class="header">
+        <th data-quarto-table-cell-role="th">
+        </th>
+        <th data-quarto-table-cell-role="th">
+         model
+        </th>
+        <th data-quarto-table-cell-role="th">
+         cv_roc_auc_mean
+        </th>
+        <th data-quarto-table-cell-role="th">
+         cv_accuracy_mean
+        </th>
+        <th data-quarto-table-cell-role="th">
+         cv_precision_mean
+        </th>
+        <th data-quarto-table-cell-role="th">
+         cv_recall_mean
+        </th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr class="odd">
+        <th data-quarto-table-cell-role="th">
+         0
+        </th>
+        <td>
+         Logistic Regression
+        </td>
+        <td>
+         0.848566
+        </td>
+        <td>
+         0.810848
+        </td>
+        <td>
+         0.670438
+        </td>
+        <td>
+         0.567290
+        </td>
+       </tr>
+       <tr class="even">
+        <th data-quarto-table-cell-role="th">
+         1
+        </th>
+        <td>
+         Random Forest
+        </td>
+        <td>
+         0.846380
+        </td>
+        <td>
+         0.806584
+        </td>
+        <td>
+         0.680451
+        </td>
+        <td>
+         0.512986
+        </td>
+       </tr>
+      </tbody>
+     </table>
+    </div>
+   </div>
+  </div>
+  <p>
+   The cross-validation table gives a balanced view of model quality before looking at the held-out test set. ROC-AUC is the main ranking metric because the business question is about ordering customers by risk, not just making hard class calls at one threshold.
+  </p>
+ </section>
+ <section class="level2" id="test-set-performance">
+  <h2 class="anchored" data-anchor-id="test-set-performance">
+   Test-set performance
+  </h2>
+  <div class="cell" data-execution_count="9" id="cell-fit-best-model">
+   <details class="code-fold">
+    <summary>
+     Show code
+    </summary>
+    <div class="code-copy-outer-scaffold">
+     <div class="sourceCode cell-code" id="cb7">
+      <pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a aria-hidden="true" href="#cb7-1" tabindex="-1"></a>best_model <span class="op">=</span> logistic_model</span>
+<span id="cb7-2"><a aria-hidden="true" href="#cb7-2" tabindex="-1"></a>best_model.fit(X_train, y_train)</span>
+<span id="cb7-3"><a aria-hidden="true" href="#cb7-3" tabindex="-1"></a></span>
+<span id="cb7-4"><a aria-hidden="true" href="#cb7-4" tabindex="-1"></a>y_prob <span class="op">=</span> best_model.predict_proba(X_test)[:, <span class="dv">1</span>]</span>
+<span id="cb7-5"><a aria-hidden="true" href="#cb7-5" tabindex="-1"></a>y_pred <span class="op">=</span> (y_prob <span class="op">&gt;=</span> <span class="fl">0.50</span>).astype(<span class="bu">int</span>)</span>
+<span id="cb7-6"><a aria-hidden="true" href="#cb7-6" tabindex="-1"></a></span>
+<span id="cb7-7"><a aria-hidden="true" href="#cb7-7" tabindex="-1"></a>test_metrics <span class="op">=</span> pd.DataFrame(</span>
+<span id="cb7-8"><a aria-hidden="true" href="#cb7-8" tabindex="-1"></a>    {</span>
+<span id="cb7-9"><a aria-hidden="true" href="#cb7-9" tabindex="-1"></a>        <span class="st">"metric"</span>: [<span class="st">"ROC-AUC"</span>, <span class="st">"Accuracy"</span>, <span class="st">"Precision"</span>, <span class="st">"Recall"</span>],</span>
+<span id="cb7-10"><a aria-hidden="true" href="#cb7-10" tabindex="-1"></a>        <span class="st">"value"</span>: [</span>
+<span id="cb7-11"><a aria-hidden="true" href="#cb7-11" tabindex="-1"></a>            roc_auc_score(y_test, y_prob),</span>
+<span id="cb7-12"><a aria-hidden="true" href="#cb7-12" tabindex="-1"></a>            accuracy_score(y_test, y_pred),</span>
+<span id="cb7-13"><a aria-hidden="true" href="#cb7-13" tabindex="-1"></a>            precision_score(y_test, y_pred),</span>
+<span id="cb7-14"><a aria-hidden="true" href="#cb7-14" tabindex="-1"></a>            recall_score(y_test, y_pred),</span>
+<span id="cb7-15"><a aria-hidden="true" href="#cb7-15" tabindex="-1"></a>        ],</span>
+<span id="cb7-16"><a aria-hidden="true" href="#cb7-16" tabindex="-1"></a>    }</span>
+<span id="cb7-17"><a aria-hidden="true" href="#cb7-17" tabindex="-1"></a>)</span>
+<span id="cb7-18"><a aria-hidden="true" href="#cb7-18" tabindex="-1"></a></span>
+<span id="cb7-19"><a aria-hidden="true" href="#cb7-19" tabindex="-1"></a>test_metrics</span></code></pre>
+     </div>
+     <button class="code-copy-button" title="Copy to Clipboard">
+      <i class="bi">
+      </i>
+     </button>
+    </div>
+   </details>
+   <div class="cell-output cell-output-display" data-execution_count="9" id="fit-best-model">
+    <div>
+     <table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+      <thead>
+       <tr class="header">
+        <th data-quarto-table-cell-role="th">
+        </th>
+        <th data-quarto-table-cell-role="th">
+         metric
+        </th>
+        <th data-quarto-table-cell-role="th">
+         value
+        </th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr class="odd">
+        <th data-quarto-table-cell-role="th">
+         0
+        </th>
+        <td>
+         ROC-AUC
+        </td>
+        <td>
+         0.836333
+        </td>
+       </tr>
+       <tr class="even">
+        <th data-quarto-table-cell-role="th">
+         1
+        </th>
+        <td>
+         Accuracy
+        </td>
+        <td>
+         0.796682
+        </td>
+       </tr>
+       <tr class="odd">
+        <th data-quarto-table-cell-role="th">
+         2
+        </th>
+        <td>
+         Precision
+        </td>
+        <td>
+         0.651376
+        </td>
+       </tr>
+       <tr class="even">
+        <th data-quarto-table-cell-role="th">
+         3
+        </th>
+        <td>
+         Recall
+        </td>
+        <td>
+         0.506239
+        </td>
+       </tr>
+      </tbody>
+     </table>
+    </div>
+   </div>
+  </div>
+  <div class="cell" data-execution_count="10" id="cell-roc-curve">
+   <div class="cell-output cell-output-display">
+    <div>
+     <figure class="figure">
+      <p>
+       <img class="figure-img" height="449" id="roc-curve" src="telco-churn-report_files/figure-html/roc-curve-output-1.png" width="445"/>
+      </p>
+     </figure>
+    </div>
+   </div>
+  </div>
+  <div class="cell" data-execution_count="11" id="cell-confusion-matrix">
+   <div class="cell-output cell-output-display">
+    <div>
+     <figure class="figure">
+      <p>
+       <img class="figure-img" height="393" id="confusion-matrix" src="telco-churn-report_files/figure-html/confusion-matrix-output-1.png" width="433"/>
+      </p>
+     </figure>
+    </div>
+   </div>
+  </div>
+  <p>
+   The exact best model may change after tuning, but this structure already supports a professional discussion. Logistic regression is often a strong baseline in churn work because it is interpretable and stable. A tree-based model is useful to check whether nonlinear interactions meaningfully improve ranking performance.
+  </p>
+ </section>
+ <section class="level2" id="performance-analysis">
+  <h2 class="anchored" data-anchor-id="performance-analysis">
+   Performance analysis
+  </h2>
+  <p>
+   For a professional writeup, this section should move past metric reporting and explain tradeoffs.
+  </p>
+  <ul>
+   <li>
+    <strong>
+     ROC-AUC
+    </strong>
+    tells us how well the model separates higher-risk from lower-risk customers across thresholds.
+   </li>
+   <li>
+    <strong>
+     Precision
+    </strong>
+    matters when retention outreach is expensive and false alarms are costly.
+   </li>
+   <li>
+    <strong>
+     Recall
+    </strong>
+    matters when missing a likely churner is costly.
+   </li>
+   <li>
+    <strong>
+     Threshold choice
+    </strong>
+    should depend on business constraints rather than habit.
+   </li>
+  </ul>
+  <p>
+   A natural next step would be to compare several decision thresholds and frame the tradeoff in operational terms.
+  </p>
+  <div class="cell" data-execution_count="12" id="cell-threshold-sweep">
+   <div class="cell-output cell-output-display" data-execution_count="12" id="threshold-sweep">
+    <div>
+     <table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+      <thead>
+       <tr class="header">
+        <th data-quarto-table-cell-role="th">
+        </th>
+        <th data-quarto-table-cell-role="th">
+         threshold
+        </th>
+        <th data-quarto-table-cell-role="th">
+         precision
+        </th>
+        <th data-quarto-table-cell-role="th">
+         recall
+        </th>
+        <th data-quarto-table-cell-role="th">
+         accuracy
+        </th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr class="odd">
+        <th data-quarto-table-cell-role="th">
+         0
+        </th>
+        <td>
+         0.20
+        </td>
+        <td>
+         0.481142
+        </td>
+        <td>
+         0.841355
+        </td>
+        <td>
+         0.716588
+        </td>
+       </tr>
+       <tr class="even">
+        <th data-quarto-table-cell-role="th">
+         1
+        </th>
+        <td>
+         0.25
+        </td>
+        <td>
+         0.524590
+        </td>
+        <td>
+         0.798574
+        </td>
+        <td>
+         0.754028
+        </td>
+       </tr>
+       <tr class="odd">
+        <th data-quarto-table-cell-role="th">
+         2
+        </th>
+        <td>
+         0.30
+        </td>
+        <td>
+         0.551265
+        </td>
+        <td>
+         0.737968
+        </td>
+        <td>
+         0.770616
+        </td>
+       </tr>
+       <tr class="even">
+        <th data-quarto-table-cell-role="th">
+         3
+        </th>
+        <td>
+         0.35
+        </td>
+        <td>
+         0.570561
+        </td>
+        <td>
+         0.670232
+        </td>
+        <td>
+         0.778199
+        </td>
+       </tr>
+       <tr class="odd">
+        <th data-quarto-table-cell-role="th">
+         4
+        </th>
+        <td>
+         0.40
+        </td>
+        <td>
+         0.594549
+        </td>
+        <td>
+         0.622103
+        </td>
+        <td>
+         0.786730
+        </td>
+       </tr>
+       <tr class="even">
+        <th data-quarto-table-cell-role="th">
+         5
+        </th>
+        <td>
+         0.45
+        </td>
+        <td>
+         0.618042
+        </td>
+        <td>
+         0.573975
+        </td>
+        <td>
+         0.792417
+        </td>
+       </tr>
+       <tr class="odd">
+        <th data-quarto-table-cell-role="th">
+         6
+        </th>
+        <td>
+         0.50
+        </td>
+        <td>
+         0.651376
+        </td>
+        <td>
+         0.506239
+        </td>
+        <td>
+         0.796682
+        </td>
+       </tr>
+       <tr class="even">
+        <th data-quarto-table-cell-role="th">
+         7
+        </th>
+        <td>
+         0.55
+        </td>
+        <td>
+         0.668464
+        </td>
+        <td>
+         0.442068
+        </td>
+        <td>
+         0.793365
+        </td>
+       </tr>
+      </tbody>
+     </table>
+    </div>
+   </div>
+  </div>
+  <div class="cell" data-execution_count="13" id="cell-threshold-plot">
+   <div class="cell-output cell-output-display">
+    <div>
+     <figure class="figure">
+      <p>
+       <img class="figure-img" height="413" id="threshold-plot" src="telco-churn-report_files/figure-html/threshold-plot-output-1.png" width="589"/>
+      </p>
+     </figure>
+    </div>
+   </div>
+  </div>
+ </section>
+ <section class="level2" id="conclusion">
+  <h2 class="anchored" data-anchor-id="conclusion">
+   Conclusion
+  </h2>
+  <p>
+   This project shows a complete and readable classification workflow:
+  </p>
+  <ol type="1">
+   <li>
+    start with a clear prediction question,
+   </li>
+   <li>
+    perform targeted exploratory analysis,
+   </li>
+   <li>
+    build a preprocessing pipeline for mixed data,
+   </li>
+   <li>
+    compare models with cross-validation,
+   </li>
+   <li>
+    evaluate test-set performance with ROC-AUC and threshold-aware metrics,
+   </li>
+   <li>
+    close with decision-oriented interpretation rather than code commentary.
+   </li>
+  </ol>
+  <p>
+   For a stronger final version, I would add modest hyperparameter tuning, feature importance or coefficient interpretation, and a short section on limitations such as missing behavioral variables or possible temporal leakage concerns.
+  </p>
+ </section>
+</main>
+
