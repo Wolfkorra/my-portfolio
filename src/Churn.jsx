@@ -33,7 +33,7 @@ export default function Churn() {
           </div>
           <div style={{ marginTop: '2rem', textAlign: 'center' }}>
             <p style={{ color: 'var(--text-muted-light)' }}>
-              This report is a prose-first Quarto report using Python, pandas, scikit-learn, cross-validation, and ROC-AUC.
+              This data analysis project demonstrates a complete machine learning workflow to predict customer churn, providing clear, actionable business insights while retaining essential statistical metrics like ROC-AUC.
             </p>
             <a href="/analysis/telco-churn-report.html" target="_blank" rel="noreferrer" className="site-btn site-btn-secondary" style={{ marginTop: '1rem' }}>Open in New Tab</a>
           </div>

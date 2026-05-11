@@ -39,13 +39,13 @@ export default function Projects() {
       <div className="project-page-card">
         <img src="/images/projects/churn-thumb.png" className="page-thumb" alt="Machine Learning" />
         <h3>What it is</h3>
-        <p>A prose-first Quarto report on customer churn prediction using Python, pandas, scikit-learn, classification models, cross-validation, and ROC-AUC.</p>
+        <p>A data analysis project focused on predicting customer churn. It demonstrates a complete machine learning workflow from data exploration to model evaluation, designed to provide clear, actionable business insights while keeping key statistical metrics like ROC-AUC.</p>
         <h3>What it shows</h3>
         <ul>
-          <li>exploratory data analysis</li>
-          <li>preprocessing and feature engineering</li>
-          <li>model evaluation and narrative reporting</li>
-          <li>recruiter-friendly communication</li>
+          <li>Data exploration and pattern discovery</li>
+          <li>Preparing mixed data for machine learning</li>
+          <li>Comparing models and evaluating performance</li>
+          <li>Communicating results to non-technical audiences</li>
         </ul>
         <a href="/analysis/telco-churn-report.html" target="_blank" rel="noreferrer" className="project-link">Open the report</a>
       </div>

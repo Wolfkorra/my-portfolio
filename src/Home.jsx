@@ -143,7 +143,7 @@ export default function Home() {
               <div className="showcase-card">
                 <img src="/images/projects/churn-thumb.png" className="showcase-thumb" alt="Machine Learning" />
                 <h3>Machine Learning Analysis</h3>
-                <p>A prose-forward Quarto report on customer churn prediction using Python, pandas, scikit-learn, classification models, and ROC-AUC.</p>
+                <p>A data analysis project focused on predicting customer churn. It demonstrates a complete machine learning workflow designed to provide clear, actionable business insights.</p>
                 <Link to="/churn" className="project-link">Open Report</Link>
               </div>
               <div className="showcase-card">
