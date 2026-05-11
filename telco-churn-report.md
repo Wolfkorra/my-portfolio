@@ -36,8 +36,7 @@
 <div>
 
 ::: description
-A prose-first Quarto report using Python, pandas, scikit-learn,
-cross-validation, and ROC-AUC.
+
 :::
 
 </div>
@@ -62,7 +61,7 @@ Published
 :::
 
 ::: quarto-title-meta-contents
-April 23, 2026
+May 10, 2026
 :::
 
 </div>
@@ -72,15 +71,8 @@ April 23, 2026
 ::: {#introduction .section .level2}
 ## Introduction {#introduction .anchored anchor-id="introduction"}
 
-This report asks a practical question: **which customers are at the
-highest risk of churn, and how well can that risk be predicted from
-customer account information?** This is a good portfolio problem because
-it naturally supports exploratory data analysis, preprocessing,
-classification, cross-validation, and threshold-aware model evaluation.
+We're looking to answer a straightforward question: **Which customers are most likely to leave, and can we predict this based on their account information?** We'll explore the data, prep it for analysis, and build a machine learning model to help flag these at-risk customers.
 
-The writeup is intentionally prose-forward. The goal is not to show
-every possible model. The goal is to show a clean analytical workflow
-that balances technical detail with readable decision support.
 :::
 
 ::: {#data-and-setup .section .level2}
@@ -181,8 +173,7 @@ customer churned.
 ::: {#exploratory-data-analysis .section .level2}
 ## Exploratory data analysis {#exploratory-data-analysis .anchored anchor-id="exploratory-data-analysis"}
 
-A good report does not flood the page with charts. The purpose here is
-to identify a few patterns that matter for modeling and interpretation.
+Instead of overwhelming you with charts, we're focusing on the key patterns that directly influence our model.
 
 ::: {#cell-target-rate .cell execution_count="3"}
 ::: {.cell-output .cell-output-display}
@@ -227,18 +218,13 @@ height="449" /></p>
 :::
 :::
 
-Three patterns stand out. First, churn is present but not dominant, so
-the problem is somewhat imbalanced without being extreme. Second,
-contract type appears strongly related to churn. Third, churn risk is
-not likely to be captured by a single numeric variable alone, which
-supports using a preprocessing pipeline that handles mixed data types.
+Three main takeaways emerge from our data. First, while some customers do leave (churn), the majority stay, so our data is slightly lopsided. Second, the type of contract a customer has is a huge indicator of whether they'll stick around. Lastly, predicting churn isn't as simple as looking at a single number; we'll need a combination of different factors, which means our model needs to handle both numbers and text categories.
 :::
 
 ::: {#feature-engineering-and-preprocessing .section .level2}
 ## Feature engineering and preprocessing {#feature-engineering-and-preprocessing .anchored anchor-id="feature-engineering-and-preprocessing"}
 
-The dataset includes both numeric and categorical variables. A clean way
-to handle this is a column transformer inside a pipeline.
+Our data is a mix of numbers (like monthly charges) and categories (like internet service type). To make sure our machine learning model can understand everything, we'll cleanly organize these into a structured pipeline before feeding them in.
 
 ::: {#split-data .cell execution_count="6"}
 Show code
@@ -291,8 +277,7 @@ cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=4025)
 ::: {#modeling .section .level2}
 ## Modeling {#modeling .anchored anchor-id="modeling"}
 
-A good portfolio report should compare a simple, interpretable baseline
-with at least one stronger nonlinear model.
+We're going to compare two approaches: a straightforward baseline model (Logistic Regression) that's easy to understand, and a more complex one (Random Forest) that might find hidden patterns.
 
 ::: {#define-models .cell execution_count="7"}
 Show code
@@ -376,10 +361,7 @@ cv_df
 :::
 :::
 
-The cross-validation table gives a balanced view of model quality before
-looking at the held-out test set. ROC-AUC is the main ranking metric
-because the business question is about ordering customers by risk, not
-just making hard class calls at one threshold.
+The cross-validation table shows us how our models perform on average before we test them on our final, untouched dataset. We're mainly looking at the ROC-AUC score, which is a statistical measure that tells us how good our model is at distinguishing between customers who will leave and those who will stay. For this business case, ranking customers by their risk level is more important than just giving a strict 'yes' or 'no'.
 :::
 
 ::: {#test-set-performance .section .level2}
@@ -442,6 +424,9 @@ id="roc-curve" class="figure-img" width="445" height="449" /></p>
 :::
 :::
 
+**ROC Curve on the test set:** The ROC curve plots our true positive rate against the false positive rate. The curve shows that our model performs significantly better than random guessing (which would be a diagonal line), effectively distinguishing between customers who will churn and those who will stay. The large area under the curve (AUC) indicates a strong predictive capability.
+
+
 ::: {#cell-confusion-matrix .cell execution_count="11"}
 ::: {.cell-output .cell-output-display}
 <div>
@@ -456,29 +441,23 @@ id="confusion-matrix" class="figure-img" width="433" height="393" /></p>
 :::
 :::
 
-The exact best model may change after tuning, but this structure already
-supports a professional discussion. Logistic regression is often a
-strong baseline in churn work because it is interpretable and stable. A
-tree-based model is useful to check whether nonlinear interactions
-meaningfully improve ranking performance.
+**Confusion Matrix at 0.50 threshold:** This matrix breaks down our model\'s predictions at a 50% cutoff. The model successfully identified a significant portion of actual churners, but also missed some. It correctly identified most loyal customers but flagged some who ended up staying. This highlights that at this specific threshold, the model leans slightly conservative in predicting churn, prioritizing precision over recall.
+
+
+While we could spend more time perfectly tuning this model, the current results already give us a great starting point for business decisions. Logistic regression provides a solid baseline because it's transparent and reliable, while our tree-based model helps us see if more complex data interactions provide a better risk ranking.
 :::
 
 ::: {#performance-analysis .section .level2}
 ## Performance analysis {#performance-analysis .anchored anchor-id="performance-analysis"}
 
-For a professional writeup, this section should move past metric
-reporting and explain tradeoffs.
+Now, let's look beyond just the numbers and understand what these metrics mean for real-world decisions:
 
--   **ROC-AUC** tells us how well the model separates higher-risk from
-    lower-risk customers across thresholds.
--   **Precision** matters when retention outreach is expensive and false
-    alarms are costly.
--   **Recall** matters when missing a likely churner is costly.
--   **Threshold choice** should depend on business constraints rather
-    than habit.
+-   **ROC-AUC** shows our model's overall ability to separate high-risk from low-risk customers.
+-   **Precision** is crucial when offering retention discounts is expensive—we want to be sure a flagged customer was actually going to leave.
+-   **Recall** is more important when the cost of losing a customer is high, ensuring we don't miss anyone who's a flight risk.
+-   **Threshold choice**: The cutoff for classifying a customer as 'at-risk' should be based on your specific business costs and goals, not just a default setting.
 
-A natural next step would be to compare several decision thresholds and
-frame the tradeoff in operational terms.
+A practical next step would be to weigh these thresholds against the actual costs of your retention campaigns.
 
 ::: {#cell-threshold-sweep .cell execution_count="12"}
 ::: {#threshold-sweep .cell-output .cell-output-display execution_count="12"}
@@ -512,26 +491,19 @@ id="threshold-plot" class="figure-img" width="589" height="413" /></p>
 </div>
 :::
 :::
+
+**Threshold tradeoffs on the test set:** This plot visualizes the delicate balance between precision and recall across different decision thresholds. As we lower the threshold to catch more potential churners (increasing recall), we inevitably flag more loyal customers by mistake (decreasing precision). Finding the right "sweet spot" on this graph is key to a cost-effective retention strategy.
+
 :::
 
 ::: {#conclusion .section .level2}
 ## Conclusion {#conclusion .anchored anchor-id="conclusion"}
 
-This project shows a complete and readable classification workflow:
+This model empowers the business to shift from a reactive to a proactive customer retention strategy. By reliably predicting which customers are at risk of leaving, it allows us to focus our resources where they matter most.
 
-1.  start with a clear prediction question,
-2.  perform targeted exploratory analysis,
-3.  build a preprocessing pipeline for mixed data,
-4.  compare models with cross-validation,
-5.  evaluate test-set performance with ROC-AUC and threshold-aware
-    metrics,
-6.  close with decision-oriented interpretation rather than code
-    commentary.
+Instead of offering blanket discounts to everyone, the business should target interventions specifically at those flagged as high-risk by the model. Furthermore, since our earlier data exploration showed that month-to-month contracts are heavily associated with churn, retention strategies could focus on incentivizing these users to switch to longer-term plans. This targeted approach not only saves money but also improves the overall customer experience.
 
-For a stronger final version, I would add modest hyperparameter tuning,
-feature importance or coefficient interpretation, and a short section on
-limitations such as missing behavioral variables or possible temporal
-leakage concerns.
+To take this even further, we could fine-tune the model, dig deeper into which specific features are driving customer decisions, and look at other behavioral data that might be missing here.
 :::
 :::
 :::

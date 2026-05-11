@@ -6,7 +6,7 @@
 <meta content="width=device-width, initial-scale=1.0, user-scalable=yes" name="viewport"/>
 <meta content="Abdullah Korra" name="author"/>
 <meta content="2026-04-23" name="dcterms.date"/>
-<meta content="A prose-first Quarto report using Python, pandas, scikit-learn, cross-validation, and ROC-AUC." name="description"/>
+<meta content="" name="description"/>
 <title>Customer Churn Modeling with Reproducible Machine Learning – Abdullah Korra</title>
 <style>
 code{white-space: pre-wrap;}
@@ -108,16 +108,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <meta content="Abdullah Korra" name="author"/>
 <meta content="Python, pandas, scikit-learn, regression, classification, cross-validation, RMSE, ROC-AUC, Git, reproducible workflows, astronomy, robotics, machine learning" name="keywords"/>
 <meta content="Customer Churn Modeling with Reproducible Machine Learning – Abdullah Korra" name="twitter:title"/>
-<meta content="A prose-first Quarto report using Python, pandas, scikit-learn, cross-validation, and ROC-AUC." name="twitter:description"/>
+<meta content="" name="twitter:description"/>
 <meta content="Customer Churn Modeling with Reproducible Machine Learning – Abdullah Korra" property="og:title"/>
-<meta content="A prose-first Quarto report using Python, pandas, scikit-learn, cross-validation, and ROC-AUC." property="og:description"/>
+<meta content="" property="og:description"/>
 <meta content="Customer Churn Modeling with Reproducible Machine Learning – Abdullah Korra" property="og:title"/>
-<meta content="A prose-first Quarto report using Python, pandas, scikit-learn, cross-validation, and ROC-AUC." property="og:description"/>
+<meta content="" property="og:description"/>
 <meta content="https://YOUR-GITHUB-USERNAME.github.io/YOUR-REPO-NAME/analysis/assets/social-card.png" property="og:image"/>
 <meta content="Abdullah Korra" property="og:site_name"/>
 <meta content="Preview card for Abdullah Korra portfolio" property="og:image:alt"/>
 <meta content="Customer Churn Modeling with Reproducible Machine Learning – Abdullah Korra" name="twitter:title"/>
-<meta content="A prose-first Quarto report using Python, pandas, scikit-learn, cross-validation, and ROC-AUC." name="twitter:description"/>
+<meta content="" name="twitter:description"/>
 <meta content="https://YOUR-GITHUB-USERNAME.github.io/YOUR-REPO-NAME/analysis/assets/social-card.png" name="twitter:image"/>
 <meta content="Preview card for Abdullah Korra portfolio" name="twitter:image:alt"/>
 <meta content="summary_large_image" name="twitter:card"/>
@@ -152,7 +152,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div>
 <div class="description">
-    A prose-first Quarto report using Python, pandas, scikit-learn, cross-validation, and ROC-AUC.
+    
   </div>
 </div>
 <div class="quarto-title-meta">
@@ -165,15 +165,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div>
 <div class="quarto-title-meta-heading">Published</div>
 <div class="quarto-title-meta-contents">
-<p class="date">April 23, 2026</p>
+<p class="date">May 10, 2026</p>
 </div>
 </div>
 </div>
 </header>
 <section class="level2" id="introduction">
 <h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
-<p>This report asks a practical question: <strong>which customers are at the highest risk of churn, and how well can that risk be predicted from customer account information?</strong> This is a good portfolio problem because it naturally supports exploratory data analysis, preprocessing, classification, cross-validation, and threshold-aware model evaluation.</p>
-<p>The writeup is intentionally prose-forward. The goal is not to show every possible model. The goal is to show a clean analytical workflow that balances technical detail with readable decision support.</p>
+<p>We're looking to answer a straightforward question: <strong>Which customers are most likely to leave, and can we predict this based on their account information?</strong> We'll explore the data, prep it for analysis, and build a machine learning model to help flag these at-risk customers.</p>
 </section>
 <section class="level2" id="data-and-setup">
 <h2 class="anchored" data-anchor-id="data-and-setup">Data and setup</h2>
@@ -390,7 +389,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section class="level2" id="exploratory-data-analysis">
 <h2 class="anchored" data-anchor-id="exploratory-data-analysis">Exploratory data analysis</h2>
-<p>A good report does not flood the page with charts. The purpose here is to identify a few patterns that matter for modeling and interpretation.</p>
+<p>Instead of overwhelming you with charts, we're focusing on the key patterns that directly influence our model.</p>
 <div class="cell" data-execution_count="3" id="cell-target-rate">
 <div class="cell-output cell-output-display">
 <div>
@@ -418,11 +417,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>Three patterns stand out. First, churn is present but not dominant, so the problem is somewhat imbalanced without being extreme. Second, contract type appears strongly related to churn. Third, churn risk is not likely to be captured by a single numeric variable alone, which supports using a preprocessing pipeline that handles mixed data types.</p>
+<p>Three main takeaways emerge from our data. First, while some customers do leave (churn), the majority stay, so our data is slightly lopsided. Second, the type of contract a customer has is a huge indicator of whether they'll stick around. Lastly, predicting churn isn't as simple as looking at a single number; we'll need a combination of different factors, which means our model needs to handle both numbers and text categories.</p>
 </section>
 <section class="level2" id="feature-engineering-and-preprocessing">
 <h2 class="anchored" data-anchor-id="feature-engineering-and-preprocessing">Feature engineering and preprocessing</h2>
-<p>The dataset includes both numeric and categorical variables. A clean way to handle this is a column transformer inside a pipeline.</p>
+<p>Our data is a mix of numbers (like monthly charges) and categories (like internet service type). To make sure our machine learning model can understand everything, we'll cleanly organize these into a structured pipeline before feeding them in.</p>
 <div class="cell" data-execution_count="6" id="split-data">
 <details class="code-fold">
 <summary>Show code</summary>
@@ -467,7 +466,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section class="level2" id="modeling">
 <h2 class="anchored" data-anchor-id="modeling">Modeling</h2>
-<p>A good portfolio report should compare a simple, interpretable baseline with at least one stronger nonlinear model.</p>
+<p>We're going to compare two approaches: a straightforward baseline model (Logistic Regression) that's easy to understand, and a more complex one (Random Forest) that might find hidden patterns.</p>
 <div class="cell" data-execution_count="7" id="define-models">
 <details class="code-fold">
 <summary>Show code</summary>
@@ -561,7 +560,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>The cross-validation table gives a balanced view of model quality before looking at the held-out test set. ROC-AUC is the main ranking metric because the business question is about ordering customers by risk, not just making hard class calls at one threshold.</p>
+<p>The cross-validation table shows us how our models perform on average before we test them on our final, untouched dataset. We're mainly looking at the ROC-AUC score, which is a statistical measure that tells us how good our model is at distinguishing between customers who will leave and those who will stay. For this business case, ranking customers by their risk level is more important than just giving a strict 'yes' or 'no'.</p>
 </section>
 <section class="level2" id="test-set-performance">
 <h2 class="anchored" data-anchor-id="test-set-performance">Test-set performance</h2>
@@ -633,6 +632,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p><strong>ROC Curve on the test set:</strong> The ROC curve plots our true positive rate against the false positive rate. The curve shows that our model performs significantly better than random guessing (which would be a diagonal line), effectively distinguishing between customers who will churn and those who will stay. The large area under the curve (AUC) indicates a strong predictive capability.</p>
 <div class="cell" data-execution_count="11" id="cell-confusion-matrix">
 <div class="cell-output cell-output-display">
 <div>
@@ -642,18 +642,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>The exact best model may change after tuning, but this structure already supports a professional discussion. Logistic regression is often a strong baseline in churn work because it is interpretable and stable. A tree-based model is useful to check whether nonlinear interactions meaningfully improve ranking performance.</p>
+<p><strong>Confusion Matrix at 0.50 threshold:</strong> This matrix breaks down our model\'s predictions at a 50% cutoff. The model successfully identified a significant portion of actual churners, but also missed some. It correctly identified most loyal customers but flagged some who ended up staying. This highlights that at this specific threshold, the model leans slightly conservative in predicting churn, prioritizing precision over recall.</p>
+<p>While we could spend more time perfectly tuning this model, the current results already give us a great starting point for business decisions. Logistic regression provides a solid baseline because it's transparent and reliable, while our tree-based model helps us see if more complex data interactions provide a better risk ranking.</p>
 </section>
 <section class="level2" id="performance-analysis">
 <h2 class="anchored" data-anchor-id="performance-analysis">Performance analysis</h2>
-<p>For a professional writeup, this section should move past metric reporting and explain tradeoffs.</p>
+<p>Now, let's look beyond just the numbers and understand what these metrics mean for real-world decisions:</p>
 <ul>
-<li><strong>ROC-AUC</strong> tells us how well the model separates higher-risk from lower-risk customers across thresholds.</li>
-<li><strong>Precision</strong> matters when retention outreach is expensive and false alarms are costly.</li>
-<li><strong>Recall</strong> matters when missing a likely churner is costly.</li>
-<li><strong>Threshold choice</strong> should depend on business constraints rather than habit.</li>
+<li><strong>ROC-AUC</strong> shows our model's overall ability to separate high-risk from low-risk customers.</li>
+<li><strong>Precision</strong> is crucial when offering retention discounts is expensive—we want to be sure a flagged customer was actually going to leave.</li>
+<li><strong>Recall</strong> is more important when the cost of losing a customer is high, ensuring we don't miss anyone who's a flight risk.</li>
+<li><strong>Threshold choice</strong>: The cutoff for classifying a customer as 'at-risk' should be based on your specific business costs and goals, not just a default setting.</li>
 </ul>
-<p>A natural next step would be to compare several decision thresholds and frame the tradeoff in operational terms.</p>
+<p>A practical next step would be to weigh these thresholds against the actual costs of your retention campaigns.</p>
 <div class="cell" data-execution_count="12" id="cell-threshold-sweep">
 <div class="cell-output cell-output-display" data-execution_count="12" id="threshold-sweep">
 <div>
@@ -738,19 +739,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p><strong>Threshold tradeoffs on the test set:</strong> This plot visualizes the delicate balance between precision and recall across different decision thresholds. As we lower the threshold to catch more potential churners (increasing recall), we inevitably flag more loyal customers by mistake (decreasing precision). Finding the right "sweet spot" on this graph is key to a cost-effective retention strategy.</p>
 </section>
 <section class="level2" id="conclusion">
 <h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
-<p>This project shows a complete and readable classification workflow:</p>
-<ol type="1">
-<li>start with a clear prediction question,</li>
-<li>perform targeted exploratory analysis,</li>
-<li>build a preprocessing pipeline for mixed data,</li>
-<li>compare models with cross-validation,</li>
-<li>evaluate test-set performance with ROC-AUC and threshold-aware metrics,</li>
-<li>close with decision-oriented interpretation rather than code commentary.</li>
-</ol>
-<p>For a stronger final version, I would add modest hyperparameter tuning, feature importance or coefficient interpretation, and a short section on limitations such as missing behavioral variables or possible temporal leakage concerns.</p>
+<p>This model empowers the business to shift from a reactive to a proactive customer retention strategy. By reliably predicting which customers are at risk of leaving, it allows us to focus our resources where they matter most.</p>
+<p>Instead of offering blanket discounts to everyone, the business should target interventions specifically at those flagged as high-risk by the model. Furthermore, since our earlier data exploration showed that month-to-month contracts are heavily associated with churn, retention strategies could focus on incentivizing these users to switch to longer-term plans. This targeted approach not only saves money but also improves the overall customer experience.</p>
+<p>To take this even further, we could fine-tune the model, dig deeper into which specific features are driving customer decisions, and look at other behavioral data that might be missing here.</p>
 </section>
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
