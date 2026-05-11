@@ -14,6 +14,8 @@ export default function Resume() {
           <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', marginBottom: '2rem' }}>
             <Link to="/" className="site-btn site-btn-primary" style={{ backgroundColor: 'var(--primary)', color: 'var(--btn-text)', padding: '10px 20px', borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold' }}>Home</Link>
             <a href="/assets/Abdullah_Korra_Resume.pdf" target="_blank" rel="noreferrer" className="site-btn site-btn-primary" style={{ backgroundColor: 'var(--primary)', color: 'var(--btn-text)', padding: '10px 20px', borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold' }}>Download PDF</a>
+            <a href="/assets/abdullah-korra-cover-letter.pdf" target="_blank" rel="noreferrer" className="site-btn site-btn-primary" style={{ backgroundColor: 'var(--primary)', color: 'var(--btn-text)', padding: '10px 20px', borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold' }}>Cover Letter for Math-4025</a>
+            <a href="/assets/Job-Advertisement-for-Math-4025.pdf" target="_blank" rel="noreferrer" className="site-btn site-btn-primary" style={{ backgroundColor: 'var(--primary)', color: 'var(--btn-text)', padding: '10px 20px', borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold' }}>Job Advertisement for Math-4025</a>
           </div>
           <h1 className="section-title" style={{ marginBottom: '1rem' }}>Resume</h1>
         </div>
