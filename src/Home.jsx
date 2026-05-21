@@ -33,7 +33,7 @@ export default function Home() {
                 />
               </div>
               <p className="hero-description">
-                Senior at College of Idaho. I build technical work across astronomy software, scientific computing, robotics, and reproducible analysis. Connecting physical systems with computation.
+                I build technical work across astronomy software, scientific computing, robotics, and reproducible analysis. Connecting physical systems with computation.
               </p>
               <div className="hero-actions">
                 <Link to="/resume" className="site-btn site-btn-primary">Hire Me</Link>
