@@ -6,6 +6,7 @@ import Resume from './Resume';
 import Statement from './Statement';
 import Agribot from './Agribot';
 import Churn from './Churn';
+import Bruneau from './Bruneau';
 import Posters from './Posters';
 import Fabrication from './Fabrication';
 import Education from './Education';
@@ -13,7 +14,7 @@ import InteractiveBackground from './components/InteractiveBackground';
 
 function AppContent() {
   const location = useLocation();
-  const isProjectPage = location.pathname === '/agribot' || location.pathname === '/churn' || location.pathname === '/posters' || location.pathname === '/fabrication' || location.pathname === '/resume' || location.pathname === '/education';
+  const isProjectPage = location.pathname === '/agribot' || location.pathname === '/churn' || location.pathname === '/bruneau' || location.pathname === '/posters' || location.pathname === '/fabrication' || location.pathname === '/resume' || location.pathname === '/education';
 
   // Theme state
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
@@ -38,6 +39,7 @@ function AppContent() {
           <Route path="/statement" element={<Statement />} />
           <Route path="/agribot" element={<Agribot />} />
           <Route path="/churn" element={<Churn />} />
+          <Route path="/bruneau" element={<Bruneau />} />
           <Route path="/posters" element={<Posters />} />
           <Route path="/fabrication" element={<Fabrication />} />
           <Route path="/education" element={<Education />} />

@@ -147,6 +147,12 @@ export default function Home() {
                 <Link to="/churn" className="project-link">Open Report</Link>
               </div>
               <div className="showcase-card">
+                <img src="/images/projects/bruneau-thumb.png" className="showcase-thumb" alt="Bruneau Pipeline" />
+                <h3>Bruneau Data Reduction</h3>
+                <p>An automated astronomical imaging pipeline handling Bayer matrix patterns and calibration workflows for science-ready data products.</p>
+                <Link to="/bruneau" className="project-link">View Project</Link>
+              </div>
+              <div className="showcase-card">
                 <img src="/images/posters/reducing-observational-astronomy-time-costs-with-multi-slit-spectrographs.png" className="showcase-thumb" alt="Research Posters" />
                 <h3>Research Posters</h3>
                 <p>Poster-based communication for the KOSMOS pipeline, RV validation, and observational astronomy workflows.</p>

@@ -50,6 +50,21 @@ export default function Projects() {
         <a href="/analysis/telco-churn-report.html" target="_blank" rel="noreferrer" className="project-link">Open the report</a>
       </div>
 
+      <h2 id="bruneau" className="section-title">Bruneau Data Reduction Pipeline</h2>
+      <div className="project-page-card">
+        <img src="/images/projects/bruneau-thumb.png" className="page-thumb" alt="Bruneau Pipeline" />
+        <h3>What it is</h3>
+        <p>An automated data reduction pipeline designed for astronomical imaging. It handles Bayer matrix patterns, calibration frames (flats, darks, biases), and produces science-ready images from raw data. The notebook is structured to handle various layout configurations and fallback scenarios when calibration data is missing.</p>
+        <h3>What it shows</h3>
+        <ul>
+          <li>Image processing and calibration algorithms</li>
+          <li>Bayer matrix demosaicing and filter pattern analysis</li>
+          <li>Robust error handling in scientific workflows</li>
+          <li>Data visualization for quality control</li>
+        </ul>
+        <Link to="/bruneau" className="project-link">View Project</Link>
+      </div>
+
       <h2 id="posters" className="section-title">Posters & Presentations</h2>
       <div className="publication-grid">
         <div className="publication-card">

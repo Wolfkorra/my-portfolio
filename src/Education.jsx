@@ -28,9 +28,9 @@ export default function Education() {
           <div style={{ marginBottom: '3rem' }}>
             <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--primary)' }}>The College of Idaho</h3>
             <p style={{ fontWeight: 'bold', marginBottom: '0.2rem' }}>Bachelor of Science in Math-Physics (Major)</p>
-            <p style={{ fontStyle: 'italic', color: 'var(--text-muted-light)', marginBottom: '1rem' }}>August 2022 – Present | Caldwell, Idaho, United States</p>
+            <p style={{ fontStyle: 'italic', color: 'var(--text-muted-light)', marginBottom: '1rem' }}>August 2022 – May 2026 | Caldwell, Idaho, United States</p>
             <p style={{ lineHeight: '1.6' }}>
-              My undergraduate experience is rooted in a Liberal Arts education, which is designed to develop critical thinking, creativity, and problem-solving abilities. By combining this foundation with general mathematics and physics, I am gaining the comprehensive understanding necessary for a career in engineering. Additionally, my specialization in data science equips me with the skills to analyze and interpret complex data across various fields. I am currently studying here as a Shelby M.C. Davis Scholar.
+              My undergraduate education at The College of Idaho integrated a rigorous Math-Physics curriculum with a broad liberal arts foundation, fostering a unique approach to complex problem-solving. This background, combined with a specialization in data science and my status as a Shelby M.C. Davis Scholar, has equipped me with both the theoretical depth and the technical proficiency to build impactful solutions at the intersection of physical systems and computational analysis.
             </p>
           </div>
 
