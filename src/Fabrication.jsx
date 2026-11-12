@@ -55,7 +55,7 @@ export default function Fabrication() {
       assets: [
         { type: "image", src: "/images/projects/3D_design/photoelectric diagram v1.jpg", label: "System Diagram", scale: 1.2 },
         { type: "image", src: "/images/projects/3D_design/Photoelectric effect v24.jpg", label: "Final Design", scale: 1.55 },
-        { type: "image", src: "/images/projects/3D_design/Photoelectric effect v24_solid.jpg", label: "Solid Render", scale: 1.2 }
+        { type: "image", src: "/images/projects/3D_design/Photoelectric effect_view.jpg", label: "Internal Chamber View", scale: 1.2 }
       ]
     },
     {
